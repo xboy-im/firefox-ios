@@ -6,6 +6,14 @@ import Foundation
 import Shared
 import Account
 
+public enum SyncReason: String {
+    case Startup = "startup"
+    case Scheduled = "scheduled"
+    case Backgrounded = "backgrounded"
+    case User = "user"
+    case DidLogin = "didLogin"
+}
+
 public protocol Stats {
     func hasData() -> Bool
 }
@@ -92,17 +100,21 @@ public class SyncEngineStatsSession: StatsSession {
 
 // Stats and metadata for a sync operation
 public class SyncOperationStatsSession: StatsSession {
-    public let uid: String
     public let deviceID: String?
-    public let didLogin: Bool
-    public let why: String
-    public let when: Timestamp
+    public let why: SyncReason
+    public var when: Timestamp?
+    public var uid: String?
 
-    public init(uid: String, deviceID: String?, when: Timestamp, why: String, didLogin: Bool = false) {
-        self.uid = uid
+    private let didLogin: Bool
+
+    public init(deviceID: String?, why: SyncReason) {
         self.deviceID = deviceID
-        self.when = when
         self.why = why
-        self.didLogin = didLogin
+        self.didLogin = why == .DidLogin
+    }
+
+    public func start(serverTimestamp: Timestamp) {
+        when = serverTimestamp ?? NSDate.now()
+        super.start()
     }
 }

@@ -31,7 +31,7 @@ public protocol SyncManager {
     func syncClientsThenTabs() -> SyncResult
     func syncHistory() -> SyncResult
     func syncLogins() -> SyncResult
-    func syncEverything() -> Success
+    func syncEverything(why why: SyncReason) -> Success
 
     // The simplest possible approach.
     func beginTimedSyncs()
@@ -1017,7 +1017,7 @@ public class BrowserProfile: Profile {
             guard self.profile.hasSyncableAccount() else { return succeed() }
 
             self.beginTimedSyncs()
-            return self.syncEverything()
+            return self.syncEverything(why: .DidLogin)
         }
 
         func locallyResetCollections(collections: [String]) -> Success {
@@ -1172,7 +1172,7 @@ public class BrowserProfile: Profile {
          * Runs the single provided synchronization function and returns its status.
          */
         private func sync(label: EngineIdentifier, function: SyncFunction) -> SyncResult {
-            return syncSeveral([(label, function)]) >>== { statuses in
+            return syncSeveral(why: .User, synchronizers: [(label, function)]) >>== { statuses in
                 let status = statuses.find { label == $0.0 }?.1
                 return deferMaybe(status ?? .NotStarted(.Unknown))
             }
@@ -1181,8 +1181,8 @@ public class BrowserProfile: Profile {
         /**
          * Convenience method for syncSeveral([(EngineIdentifier, SyncFunction)])
          */
-        private func syncSeveral(synchronizers: (EngineIdentifier, SyncFunction)...) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
-            return syncSeveral(synchronizers)
+        private func syncSeveral(why why: SyncReason, synchronizers: (EngineIdentifier, SyncFunction)...) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
+            return syncSeveral(why: why, synchronizers: synchronizers)
         }
 
         /**
@@ -1191,7 +1191,7 @@ public class BrowserProfile: Profile {
          * The statuses returned will be a superset of the ones that are requested here.
          * While a sync is ongoing, each engine from successive calls to this method will only be called once.
          */
-        private func syncSeveral(synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
+        private func syncSeveral(why why: SyncReason, synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
             syncLock.lock()
             defer { syncLock.unlock() }
 
@@ -1199,7 +1199,7 @@ public class BrowserProfile: Profile {
                 // A sync isn't already going on, so start another one.
 
                 // TODO(sleroux): Use proper info and server timestamp for when
-                let statsSession = SyncOperationStatsSession(uid: "", deviceID: "", when: NSDate.now(), why: "because")
+                let statsSession = SyncOperationStatsSession(deviceID: "", why: why)
 
                 let reducer = AsyncReducer<EngineResults, EngineTasks>(initialValue: [], queue: syncQueue) { (statuses, synchronizers)  in
                     let done = Set(statuses.map { $0.0 })
@@ -1209,7 +1209,7 @@ public class BrowserProfile: Profile {
                         return deferMaybe(statuses)
                     }
 
-                    return self.syncWith(remaining) >>== { deferMaybe(statuses + $0) }
+                    return self.syncWith(remaining, statsSession: statsSession) >>== { deferMaybe(statuses + $0) }
                 }
 
                 reducer.terminal.upon { results in
@@ -1219,7 +1219,6 @@ public class BrowserProfile: Profile {
                 // The actual work of synchronizing doesn't start until we append
                 // the synchronizers to the reducer below.
                 self.syncReducer = reducer
-                statsSession.start()
                 self.beginSyncing()
             }
 
@@ -1235,7 +1234,8 @@ public class BrowserProfile: Profile {
         }
 
         // This SHOULD NOT be called directly: use syncSeveral instead.
-        private func syncWith(synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
+        private func syncWith(synchronizers: [(EngineIdentifier, SyncFunction)],
+                              statsSession: SyncOperationStatsSession) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
             guard let account = self.profile.account else {
                 log.info("No account to sync with.")
                 let statuses = synchronizers.map {
@@ -1243,6 +1243,8 @@ public class BrowserProfile: Profile {
                 }
                 return deferMaybe(statuses)
             }
+
+            statsSession.uid = account.uid
 
             log.info("Syncing \(synchronizers.map { $0.0 })")
             let authState = account.syncAuthState
@@ -1260,12 +1262,16 @@ public class BrowserProfile: Profile {
             }
             
             return readyDeferred >>== self.takeActionsOnEngineStateChanges >>== { ready in
-                function(delegate, self.prefsForSync, ready)
+                // Once we are ready and have a server timestamp to begin our session, start recording
+                statsSession.start(ready.infoMetadata.timestampMilliseconds)
+                return function(delegate, self.prefsForSync, ready)
             }
         }
 
-        func syncEverything() -> Success {
+        func syncEverything(why why: SyncReason) -> Success {
             return self.syncSeveral(
+                why: why,
+                synchronizers:
                 ("clients", self.syncClientsWithDelegate),
                 ("tabs", self.syncTabsWithDelegate),
                 ("logins", self.syncLoginsWithDelegate),
@@ -1277,12 +1283,12 @@ public class BrowserProfile: Profile {
         func syncEverythingSoon() {
             self.doInBackgroundAfter(millis: SyncConstants.SyncOnForegroundAfterMillis) {
                 log.debug("Running delayed startup sync.")
-                self.syncEverything()
+                self.syncEverything(why: .Startup)
             }
         }
 
         @objc func syncOnTimer() {
-            self.syncEverything()
+            self.syncEverything(why: .Scheduled)
         }
 
         func hasSyncedHistory() -> Deferred<Maybe<Bool>> {
@@ -1300,6 +1306,8 @@ public class BrowserProfile: Profile {
 
         func syncClientsThenTabs() -> SyncResult {
             return self.syncSeveral(
+                why: .User,
+                synchronizers:
                 ("clients", self.syncClientsWithDelegate),
                 ("tabs", self.syncTabsWithDelegate)
             ) >>== { statuses in
