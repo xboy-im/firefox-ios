@@ -263,7 +263,7 @@ public class HistorySynchronizer: IndependentRecordSynchronizer, Synchronizer {
         if let reason = self.reasonToNotSync(storageClient) {
             return deferMaybe(.NotStarted(reason))
         }
-        
+
         let encoder = RecordEncoder<HistoryPayload>(decode: { HistoryPayload($0) }, encode: { $0 })
 
         guard let historyClient = self.collectionClient(encoder, storageClient: storageClient) else {
