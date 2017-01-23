@@ -727,7 +727,6 @@ public class BrowserProfile: Profile {
             // loop through status's and fill sync state
             syncLock.lock()
             defer { syncLock.unlock() }
-
             log.info("Ending all queued syncs.")
 
             syncDisplayState = SyncStatusResolver(engineResults: result.engineResults).resolveResults()
@@ -736,7 +735,6 @@ public class BrowserProfile: Profile {
             }
 
             reportSyncPingForResult(result)
-
             notifySyncing(NotificationProfileDidFinishSyncing)
             syncReducer = nil
         }
@@ -1199,7 +1197,7 @@ public class BrowserProfile: Profile {
                 // A sync isn't already going on, so start another one.
 
                 // TODO(sleroux): Use proper info and server timestamp for when
-                let statsSession = SyncOperationStatsSession(deviceID: "", why: why)
+                let statsSession = SyncOperationStatsSession(why: why)
 
                 let reducer = AsyncReducer<EngineResults, EngineTasks>(initialValue: [], queue: syncQueue) { (statuses, synchronizers)  in
                     let done = Set(statuses.map { $0.0 })
@@ -1245,6 +1243,7 @@ public class BrowserProfile: Profile {
             }
 
             statsSession.uid = account.uid
+            statsSession.deviceID = account.deviceRegistration?.id
 
             log.info("Syncing \(synchronizers.map { $0.0 })")
             let authState = account.syncAuthState

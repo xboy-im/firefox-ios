@@ -54,8 +54,8 @@ public class StatsSession {
     private var took: UInt64 = 0
     private var startTime: Timestamp?
 
-    public func start() {
-        startTime = NSDate.now()
+    public func start(startTime: Timestamp = NSDate.now()) {
+        self.startTime = startTime
     }
 
     public func end() -> Self {
@@ -100,21 +100,14 @@ public class SyncEngineStatsSession: StatsSession {
 
 // Stats and metadata for a sync operation
 public class SyncOperationStatsSession: StatsSession {
-    public let deviceID: String?
     public let why: SyncReason
-    public var when: Timestamp?
     public var uid: String?
+    public var deviceID: String?
 
     private let didLogin: Bool
 
-    public init(deviceID: String?, why: SyncReason) {
-        self.deviceID = deviceID
+    public init(why: SyncReason) {
         self.why = why
         self.didLogin = why == .DidLogin
-    }
-
-    public func start(serverTimestamp: Timestamp) {
-        when = serverTimestamp ?? NSDate.now()
-        super.start()
     }
 }
