@@ -726,19 +726,17 @@ public class BrowserProfile: Profile {
         private func endSyncing(result: SyncOperationResult) {
             // loop through status's and fill sync state
             syncLock.lock()
-            defer {
-                syncLock.unlock()
-            }
+            defer { syncLock.unlock() }
+
             log.info("Ending all queued syncs.")
 
-//            syncDisplayState = SyncStatusResolver(engineResults: result.results).resolveResults()
-
-            // TODO(sleroux): Send sync ping instead
-            print(result.stats)
-
-//            reportEndSyncingStatus(syncDisplayState, engineResults: result.results)
+            syncDisplayState = SyncStatusResolver(engineResults: result.engineResults).resolveResults()
+            if AppConstants.MOZ_ADHOC_SYNC_REPORTING {
+                reportAdHocEndSyncingStatus(syncDisplayState, engineResults: result.engineResults)
+            }
 
             reportSyncPingForResult(result)
+
             notifySyncing(NotificationProfileDidFinishSyncing)
             syncReducer = nil
         }
@@ -761,7 +759,7 @@ public class BrowserProfile: Profile {
             }
         }
 
-        private func reportEndSyncingStatus(displayState: SyncDisplayState?, engineResults: Maybe<EngineResults>?) {
+        private func reportAdHocEndSyncingStatus(displayState: SyncDisplayState?, engineResults: Maybe<EngineResults>?) {
             // We don't send this ad hoc telemetry on the release channel.
             guard AppConstants.BuildChannel != AppBuildChannel.Release else {
                 return

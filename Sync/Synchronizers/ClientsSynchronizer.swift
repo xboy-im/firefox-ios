@@ -277,7 +277,7 @@ public class ClientsSynchronizer: TimestampedSingleCollectionSynchronizer, Synch
                 } else {
                     uploadStats.sentFailed += 1
                 }
-                self.statsSession.uploadStats = uploadStats
+                self.statsSession.recordUploadStats(uploadStats)
                 return succeed()
         }
     }
@@ -323,7 +323,7 @@ public class ClientsSynchronizer: TimestampedSingleCollectionSynchronizer, Synch
             >>== { succeeded in
                 downloadStats.succeeded += succeeded
                 downloadStats.failed += (toInsert.count - succeeded)
-                self.statsSession.downloadStats = downloadStats
+                self.statsSession.recordDownloadStats(downloadStats)
                 return succeed()
             }
             >>== { self.processCommandsFromRecord(ours, withServer: storageClient) }

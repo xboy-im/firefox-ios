@@ -113,7 +113,7 @@ public class LoginsSynchronizer: IndependentRecordSynchronizer, Synchronizer {
 
             stats.applied += 1
             return storage.applyChangedLogin(self.getLogin(rec)).bind(recordApplyResult)
-                >>> effect({ self.statsSession.downloadStats = stats })
+                >>> effect({ self.statsSession.recordDownloadStats(stats) })
         }
     }
 
@@ -131,7 +131,7 @@ public class LoginsSynchronizer: IndependentRecordSynchronizer, Synchronizer {
                              lastTimestamp: lastTimestamp,
                              storageClient: storageClient,
                              onUpload: onUpload)
-            >>> effect({ self.statsSession.uploadStats = stats })
+            >>> effect({ self.statsSession.recordUploadStats(stats) })
     }
 
     // Find any records for which a local overlay exists. If we want to be really precise,

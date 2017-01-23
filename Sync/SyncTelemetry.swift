@@ -35,18 +35,6 @@ public struct SyncDownloadStats: Stats {
     }
 }
 
-public func +=(statsA: SyncDownloadStats, statsB: SyncDownloadStats) -> SyncDownloadStats {
-    return SyncDownloadStats(applied: statsA.applied + statsB.applied,
-                             succeeded: statsA.succeeded + statsB.succeeded,
-                             failed: statsA.failed + statsB.failed,
-                             newFailed: statsA.newFailed + statsB.newFailed,
-                             reconciled: statsA.reconciled + statsB.reconciled)
-}
-
-public func +=(statsA: SyncUploadStats, statsB: SyncUploadStats) -> SyncUploadStats {
-    return SyncUploadStats(sent: statsA.sent + statsB.sent, sentFailed: statsA.sentFailed + statsB.sentFailed)
-}
-
 // TODO(sleroux): Implement various bookmark validation issues we can run into
 public struct ValidationStats: Stats {
     public func hasData() -> Bool {
@@ -76,15 +64,29 @@ public class StatsSession {
 // Stats about a single engine's sync
 public class SyncEngineStatsSession: StatsSession {
     public let collection: String
-    public var uploadStats: SyncUploadStats
-    public var downloadStats: SyncDownloadStats
     public var failureReason: AnyObject?
     public var validationStats: ValidationStats?
+
+    private(set) var uploadStats: SyncUploadStats
+    private(set) var downloadStats: SyncDownloadStats
 
     public init(collection: String) {
         self.collection = collection
         self.uploadStats = SyncUploadStats()
         self.downloadStats = SyncDownloadStats()
+    }
+
+    public func recordDownloadStats(stats: SyncDownloadStats) {
+        self.downloadStats.applied += stats.applied
+        self.downloadStats.succeeded += stats.succeeded
+        self.downloadStats.failed += stats.failed
+        self.downloadStats.newFailed += stats.newFailed
+        self.downloadStats.reconciled += stats.reconciled
+    }
+
+    public func recordUploadStats(stats: SyncUploadStats) {
+        self.uploadStats.sent += stats.sent
+        self.uploadStats.sentFailed += stats.sentFailed
     }
 }
 

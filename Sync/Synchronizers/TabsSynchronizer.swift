@@ -81,7 +81,7 @@ public class TabsSynchronizer: TimestampedSingleCollectionSynchronizer, Synchron
                     uploadStats.sentFailed += 1
                 }
                 return succeed()
-            } >>== effect({ self.statsSession.uploadStats = uploadStats })
+            } >>== effect({ self.statsSession.recordUploadStats(uploadStats) })
         }
     }
 

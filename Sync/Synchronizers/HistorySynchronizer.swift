@@ -133,7 +133,7 @@ public class HistorySynchronizer: IndependentRecordSynchronizer, Synchronizer {
 
         return self.applyIncomingRecords(records, apply: applyRecord)
             >>> effect({
-                self.statsSession.downloadStats += stats
+                self.statsSession.recordDownloadStats(stats)
             })
     }
 
@@ -207,7 +207,7 @@ public class HistorySynchronizer: IndependentRecordSynchronizer, Synchronizer {
           >>== uploadModified
            >>> effect({ log.debug("Done syncing. Work was done? \(workWasDone)") })
            >>> { workWasDone ? storage.doneUpdatingMetadataAfterUpload() : succeed() }    // A closure so we eval workWasDone after it's set!
-           >>> effect({ self.statsSession.uploadStats += stats })
+           >>> effect({ self.statsSession.recordUploadStats(stats) })
            >>> effect({ log.debug("Done.") })
     }
 
