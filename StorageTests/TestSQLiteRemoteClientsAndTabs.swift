@@ -58,12 +58,12 @@ public class MockRemoteClientsAndTabs: RemoteClientsAndTabs {
         return succeed()
     }
 
-    public func insertOrUpdateClients(clients: [RemoteClient]) -> Success {
-        return succeed()
+    public func insertOrUpdateClients(clients: [RemoteClient]) -> Deferred<Maybe<Int>> {
+        return deferMaybe(0)
     }
 
-    public func insertOrUpdateClient(client: RemoteClient) -> Success {
-        return succeed()
+    public func insertOrUpdateClient(client: RemoteClient) -> Deferred<Maybe<Int>> {
+        return deferMaybe(0)
     }
 
     public func insertOrUpdateTabs(tabs: [RemoteTab]) -> Deferred<Maybe<Int>> {

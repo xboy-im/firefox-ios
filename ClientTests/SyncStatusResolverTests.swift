@@ -15,10 +15,14 @@ private class RandomError: MaybeErrorType {
 
 class SyncStatusResolverTests: XCTestCase {
 
+    private func mockStatsForCollection(collection: String) -> SyncEngineStatsSession {
+        return SyncEngineStatsSession(collection: collection)
+    }
+
     func testAllCompleted() {
         let results: EngineResults = [
-            ("tabs", .Completed),
-            ("clients", .Completed)
+            ("tabs", .Completed(mockStatsForCollection("tabs"))),
+            ("clients", .Completed(mockStatsForCollection("clients")))
         ]
         let maybeResults = Maybe(success: results)
 
@@ -28,7 +32,7 @@ class SyncStatusResolverTests: XCTestCase {
 
     func testAllCompletedExceptOneDisabledRemotely() {
         let results: EngineResults = [
-            ("tabs", .Completed),
+            ("tabs", .Completed(mockStatsForCollection("tabs"))),
             ("clients", .NotStarted(.EngineRemotelyNotEnabled(collection: "clients")))
         ]
         let maybeResults = Maybe(success: results)
@@ -39,7 +43,7 @@ class SyncStatusResolverTests: XCTestCase {
 
     func testAllCompletedExceptNotStartedBecauseNoAccount() {
         let results: EngineResults = [
-            ("tabs", .Completed),
+            ("tabs", .Completed(mockStatsForCollection("tabs"))),
             ("clients", .NotStarted(.NoAccount))
         ]
         let maybeResults = Maybe(success: results)
@@ -50,7 +54,7 @@ class SyncStatusResolverTests: XCTestCase {
 
     func testAllCompletedExceptNotStartedBecauseOffline() {
         let results: EngineResults = [
-            ("tabs", .Completed),
+            ("tabs", .Completed(mockStatsForCollection("tabs"))),
             ("clients", .NotStarted(.Offline))
         ]
         let maybeResults = Maybe(success: results)

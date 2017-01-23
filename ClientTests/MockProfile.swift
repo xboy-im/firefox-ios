@@ -21,11 +21,15 @@ public class MockSyncManager: SyncManager {
         return deferMaybe(true)
     }
 
-    public func syncClients() -> SyncResult { return deferMaybe(.Completed) }
-    public func syncClientsThenTabs() -> SyncResult { return deferMaybe(.Completed) }
-    public func syncHistory() -> SyncResult { return deferMaybe(.Completed) }
-    public func syncLogins() -> SyncResult { return deferMaybe(.Completed) }
-    public func syncEverything() -> Success {
+    private func completedWithStats(collection: String) -> Deferred<Maybe<SyncStatus>> {
+        return deferMaybe(SyncStatus.Completed(SyncEngineStatsSession(collection: collection)))
+    }
+    
+    public func syncClients() -> SyncResult { return completedWithStats("clients") }
+    public func syncClientsThenTabs() -> SyncResult { return completedWithStats("clientsandtabs") }
+    public func syncHistory() -> SyncResult { return completedWithStats("history") }
+    public func syncLogins() -> SyncResult { return completedWithStats("logins") }
+    public func syncEverything(why why: SyncReason) -> Success {
         return succeed()
     }
 

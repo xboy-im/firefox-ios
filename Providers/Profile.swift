@@ -1195,10 +1195,7 @@ public class BrowserProfile: Profile {
 
             if (!isSyncing) {
                 // A sync isn't already going on, so start another one.
-
-                // TODO(sleroux): Use proper info and server timestamp for when
                 let statsSession = SyncOperationStatsSession(why: why)
-
                 let reducer = AsyncReducer<EngineResults, EngineTasks>(initialValue: [], queue: syncQueue) { (statuses, synchronizers)  in
                     let done = Set(statuses.map { $0.0 })
                     let remaining = synchronizers.filter { !done.contains($0.0) }
