@@ -159,7 +159,9 @@ class TestBookmarkTreeMerging: FailFastTestCase {
     }
 
     private func mockStatsSessionForBookmarks() -> SyncEngineStatsSession {
-        return SyncEngineStatsSession(collection: "bookmarks")
+        let session = SyncEngineStatsSession(collection: "bookmarks")
+        session.start()
+        return session
     }
 
     func getSyncableBookmarks(name: String) -> MergedSQLiteBookmarks? {
