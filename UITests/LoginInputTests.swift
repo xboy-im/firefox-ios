@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import Foundation
-import Storage
+import EarlGrey
 @testable import Client
 
 class LoginInputTests: KIFTestCase {
@@ -14,85 +14,113 @@ class LoginInputTests: KIFTestCase {
         super.setUp()
         profile = (UIApplication.shared.delegate as! AppDelegate).profile!
         webRoot = SimplePageServer.start()
-        BrowserUtils.dismissFirstRunUI(tester())
+        BrowserUtils.dismissFirstRunUI()
     }
 
     override func tearDown() {
-        super.tearDown()
-        clearLogins()
+        profile.logins.removeAll().value
         BrowserUtils.resetToAboutHome(tester())
         BrowserUtils.clearPrivateData(tester: tester())
+		super.tearDown()
     }
 
-    fileprivate func clearLogins() {
-        profile.logins.removeAll().value
-    }
-
+	func enterUrl(url: String) {
+		EarlGrey().selectElementWithMatcher(grey_accessibilityID("url"))
+			.performAction(grey_tap())
+		EarlGrey().selectElementWithMatcher(grey_accessibilityID("address"))
+			.performAction(grey_typeText("\(url)\n"))
+	}
+	
+	func waitForLoginDialog(text: String, appears: Bool = true) {
+		var success = false
+		var failedReason = "Failed to display dialog"
+		
+		if (appears == false) {
+			failedReason = "Dialog still displayed"
+		}
+		
+		let saveLoginDialog = GREYCondition(name: "Check login dialog appears", block: { _ in
+			var errorOrNil: NSError?
+			let matcher = grey_allOfMatchers(grey_accessibilityLabel(text),
+				grey_sufficientlyVisible())
+			EarlGrey().selectElementWithMatcher(matcher)
+				.assertWithMatcher(grey_notNil(), error: &errorOrNil)
+			if (appears == true) {
+				success = errorOrNil == nil
+			} else {
+				success = errorOrNil != nil
+			}
+			return success
+		}).waitWithTimeout(10)
+		
+		GREYAssertTrue(saveLoginDialog, reason: failedReason)
+	}
+	
     func testLoginFormDisplaysNewSnackbar() {
-        tester().tapView(withAccessibilityIdentifier: "url")
         let url = "\(webRoot)/loginForm.html"
         let username = "test@user.com"
-        tester().clearTextFromAndThenEnterText(intoCurrentFirstResponder: "\(url)\n")
+		
+		enterUrl(url)
         tester().enterText(username, intoWebViewInputWithName: "username")
         tester().enterText("password", intoWebViewInputWithName: "password")
         tester().tapWebViewElementWithAccessibilityLabel("submit_btn")
-        tester().waitForView(withAccessibilityLabel: "Save login \(username) for \(webRoot)?")
-        tester().tapView(withAccessibilityIdentifier: "SaveLoginPrompt.dontSaveButton")
+		
+		waitForLoginDialog("Save login \(username) for \(self.webRoot)?")
+		EarlGrey().selectElementWithMatcher(grey_accessibilityID("SaveLoginPrompt.dontSaveButton"))
+			.performAction(grey_tap())
     }
 
     func testLoginFormDisplaysUpdateSnackbarIfPreviouslySaved() {
-        tester().tapView(withAccessibilityIdentifier: "url")
         let url = "\(webRoot)/loginForm.html"
         let username = "test@user.com"
         let password1 = "password1"
         let password2 = "password2"
-        tester().clearTextFromAndThenEnterText(intoCurrentFirstResponder: "\(url)\n")
-        tester().enterText(username, intoWebViewInputWithName: "username")
+		
+		enterUrl(url)
+		tester().enterText(username, intoWebViewInputWithName: "username")
         tester().enterText(password1, intoWebViewInputWithName: "password")
         tester().tapWebViewElementWithAccessibilityLabel("submit_btn")
-        tester().waitForView(withAccessibilityLabel: "Save login \(username) for \(webRoot)?")
-        tester().tapView(withAccessibilityIdentifier: "SaveLoginPrompt.saveLoginButton")
-
+		waitForLoginDialog("Save login \(username) for \(self.webRoot)?")
+		EarlGrey().selectElementWithMatcher(grey_accessibilityID("SaveLoginPrompt.saveLoginButton"))
+			.performAction(grey_tap())
+		
         tester().enterText(username, intoWebViewInputWithName: "username")
         tester().enterText(password2, intoWebViewInputWithName: "password")
         tester().tapWebViewElementWithAccessibilityLabel("submit_btn")
-        tester().waitForView(withAccessibilityLabel: "Update login \(username) for \(webRoot)?")
-        tester().tapView(withAccessibilityIdentifier: "UpdateLoginPrompt.updateButton")
+        waitForLoginDialog("Update login \(username) for \(self.webRoot)?")
+        EarlGrey().selectElementWithMatcher(grey_accessibilityID("UpdateLoginPrompt.updateButton"))
+			.performAction(grey_tap())
     }
 
     func testLoginFormDoesntOfferSaveWhenEmptyPassword() {
-        tester().tapView(withAccessibilityIdentifier: "url")
         let url = "\(webRoot)/loginForm.html"
         let username = "test@user.com"
-        tester().clearTextFromAndThenEnterText(intoCurrentFirstResponder: "\(url)\n")
-        tester().enterText(username, intoWebViewInputWithName: "username")
+		
+		enterUrl(url)
+		tester().enterText(username, intoWebViewInputWithName: "username")
         tester().enterText("", intoWebViewInputWithName: "password")
         tester().tapWebViewElementWithAccessibilityLabel("submit_btn")
 
-        // Wait a bit then verify that we haven't shown the prompt
-        tester().wait(forTimeInterval: 2)
-        XCTAssertFalse(tester().viewExistsWithLabel("Save login \(username) for \(webRoot)?"))
+        waitForLoginDialog("Save login \(username) for \(self.webRoot)?", appears: false)
     }
 
     func testLoginFormDoesntOfferUpdateWhenEmptyPassword() {
-        tester().tapView(withAccessibilityIdentifier: "url")
         let url = "\(webRoot)/loginForm.html"
         let username = "test@user.com"
         let password1 = "password1"
         let password2 = ""
-        tester().clearTextFromAndThenEnterText(intoCurrentFirstResponder: "\(url)\n")
+		
+		enterUrl(url)
         tester().enterText(username, intoWebViewInputWithName: "username")
         tester().enterText(password1, intoWebViewInputWithName: "password")
         tester().tapWebViewElementWithAccessibilityLabel("submit_btn")
-        tester().waitForView(withAccessibilityLabel: "Save login \(username) for \(webRoot)?")
-        tester().tapView(withAccessibilityIdentifier: "SaveLoginPrompt.saveLoginButton")
-
+		waitForLoginDialog("Save login \(username) for \(self.webRoot)?")
+		EarlGrey().selectElementWithMatcher(grey_accessibilityID("SaveLoginPrompt.saveLoginButton"))
+			.performAction(grey_tap())
+		
         tester().enterText(username, intoWebViewInputWithName: "username")
         tester().enterText(password2, intoWebViewInputWithName: "password")
         tester().tapWebViewElementWithAccessibilityLabel("submit_btn")
-
-        // Wait a bit then verify that we haven't shown the prompt
-        tester().wait(forTimeInterval: 2)
-        XCTAssertFalse(tester().viewExistsWithLabel("Save login \(username) for \(webRoot)?"))
+		waitForLoginDialog("Save login \(username) for \(self.webRoot)?", appears: false)
     }
 }

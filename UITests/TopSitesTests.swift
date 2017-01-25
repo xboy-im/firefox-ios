@@ -12,7 +12,6 @@ class TopSitesTests: KIFTestCase {
     fileprivate var profile: Profile!
 
     override func setUp() {
-        
         profile = (UIApplication.shared.delegate as! AppDelegate).profile!
 		BrowserUtils.dismissFirstRunUI()
     }

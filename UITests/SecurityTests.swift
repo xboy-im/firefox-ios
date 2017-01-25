@@ -4,23 +4,29 @@
 
 import Foundation
 import WebKit
+import EarlGrey
 
 class SecurityTests: KIFTestCase {
     fileprivate var webRoot: String!
 
     override func setUp() {
-        BrowserUtils.dismissFirstRunUI(tester())
         webRoot = SimplePageServer.start()
+		BrowserUtils.dismissFirstRunUI()
         super.setUp()
-        
     }
+	
+	func enterUrl(url: String) {
+		EarlGrey().selectElementWithMatcher(grey_accessibilityID("url"))
+			.performAction(grey_tap())
+		EarlGrey().selectElementWithMatcher(grey_accessibilityID("address"))
+			.performAction(grey_typeText("\(url)\n"))
+	}
 
     override func beforeEach() {
         let testURL = "\(webRoot)/localhostLoad.html"
-        tester().tapView(withAccessibilityIdentifier: "url")
-        tester().clearTextFromAndThenEnterText(intoCurrentFirstResponder: "\(testURL)\n")
-        tester().waitForView(withAccessibilityLabel: "Web content") as! WKWebView
-        tester().waitForWebViewElementWithAccessibilityLabel("Session exploit")
+		enterUrl(testURL)
+		tester().waitForViewWithAccessibilityLabel("Web content")
+		tester().waitForWebViewElementWithAccessibilityLabel("Session exploit")
     }
 
     /// Tap the Session exploit button, which tries to load the session restore page on localhost
@@ -79,12 +85,12 @@ class SecurityTests: KIFTestCase {
 
         // Since the newly opened tab doesn't have a URL/title we can't find its accessibility
         // element to close it in teardown. Workaround: load another page first.
-        tester().tapView(withAccessibilityIdentifier: "url")
-        tester().clearTextFromAndThenEnterText(intoCurrentFirstResponder: "\(webRoot)\n")
+        enterUrl(webRoot)
     }
 
     override func tearDown() {
         BrowserUtils.resetToAboutHome(tester())
         BrowserUtils.clearPrivateData(tester: tester())
+		super.tearDown()
     }
 }

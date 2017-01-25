@@ -5,17 +5,18 @@
 import Foundation
 import WebKit
 import Shared
+import EarlGrey
 
 /// This test should be disabled since session restore does not seem to work
 class SessionRestoreTests: KIFTestCase {
     fileprivate var webRoot: String!
     
     override func setUp() {
-        BrowserUtils.dismissFirstRunUI(tester())
         webRoot = SimplePageServer.start()
+		BrowserUtils.dismissFirstRunUI()
         super.setUp()
     }
-    /*
+    
     func testTabRestore() {
         let url1 = "\(webRoot)/numberedPage.html?page=1"
         let url2 = "\(webRoot)/numberedPage.html?page=2"
@@ -33,14 +34,29 @@ class SessionRestoreTests: KIFTestCase {
         // After triggering the restore, the session should look like this:
         //   about:home, page1, *page2*, page3
         // where page2 is active.
-        tester().tapView(withAccessibilityIdentifier: "url")
-        tester().clearTextFromAndThenEnterTextIntoCurrentFirstResponder("\(restoreURL!.absoluteString!)\n")
-        tester().waitForWebViewElementWithAccessibilityLabel("Page 2")
-        tester().tapView(withAccessibilityLabel: "Back")
-        tester().waitForWebViewElementWithAccessibilityLabel("Page 1")
-        tester().tapView(withAccessibilityLabel: "Back")
-        tester().waitForView(withAccessibilityLabel: "Top sites")
-        let canGoBack: Bool
+		EarlGrey().selectElementWithMatcher(grey_accessibilityID("url"))
+			.performAction(grey_tap())
+		EarlGrey().selectElementWithMatcher(grey_accessibilityID("address"))
+			.performAction(grey_typeText("\(restoreURL!.absoluteString!)\n"))
+		tester().waitForWebViewElementWithAccessibilityLabel("Page 2")
+        EarlGrey().selectElementWithMatcher(grey_accessibilityLabel("Back"))
+			.performAction(grey_tap())
+		
+		tester().waitForWebViewElementWithAccessibilityLabel("Page 1")
+        EarlGrey().selectElementWithMatcher(grey_accessibilityLabel("Back"))
+			.performAction(grey_tap())
+		let wentBack = GREYCondition(name: "Check browser went back", block: { _ in
+			var errorOrNil: NSError?
+			let matcher = grey_allOfMatchers(grey_accessibilityLabel("Top sites"),
+				grey_sufficientlyVisible())
+			EarlGrey().selectElementWithMatcher(matcher)
+				.assertWithMatcher(grey_notNil(), error: &errorOrNil)
+			let success = errorOrNil == nil
+			return success
+		}).waitWithTimeout(5)
+		GREYAssertTrue(wentBack, reason: "Didn't go back")
+		
+		let canGoBack: Bool
         do {
             try tester().tryFindingTappableView(withAccessibilityLabel: "Back")
             canGoBack = true
@@ -48,9 +64,13 @@ class SessionRestoreTests: KIFTestCase {
             canGoBack = false
         }
         XCTAssertFalse(canGoBack, "Reached the beginning of browser history")
-        tester().tapView(withAccessibilityLabel: "Forward")
-        tester().tapView(withAccessibilityLabel: "Forward")
-        tester().tapView(withAccessibilityLabel: "Forward")
+		
+        EarlGrey().selectElementWithMatcher(grey_accessibilityLabel("Forward"))
+			.performAction(grey_tap())
+        EarlGrey().selectElementWithMatcher(grey_accessibilityLabel("Forward"))
+			.performAction(grey_tap())
+        EarlGrey().selectElementWithMatcher(grey_accessibilityLabel("Forward"))
+			.performAction(grey_tap())
         tester().waitForWebViewElementWithAccessibilityLabel("Page 3")
         let canGoForward: Bool
         do {
@@ -61,7 +81,7 @@ class SessionRestoreTests: KIFTestCase {
         }
         XCTAssertFalse(canGoForward, "Reached the end of browser history")
     }
-    */
+
     override func tearDown() {
         BrowserUtils.resetToAboutHome(tester())
         BrowserUtils.clearPrivateData(tester: tester())
