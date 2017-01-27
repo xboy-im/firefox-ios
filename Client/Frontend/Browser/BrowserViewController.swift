@@ -2890,7 +2890,7 @@ extension BrowserViewController: IntroViewControllerDelegate {
             settingsTableViewController.tabManager = tabManager
             vcToPresent = settingsTableViewController
         } else {
-            let signInVC = FxAContentViewController()
+            let signInVC = FxAContentViewController(profile: profile)
             signInVC.delegate = self
             signInVC.url = profile.accountConfiguration.signInURL
             signInVC.fxaOptions = fxaOptions
@@ -2917,18 +2917,6 @@ extension BrowserViewController: IntroViewControllerDelegate {
 
 extension BrowserViewController: FxAContentViewControllerDelegate {
     func contentViewControllerDidSignIn(viewController: FxAContentViewController, data: JSON) -> Void {
-        if data["keyFetchToken"].asString == nil || data["unwrapBKey"].asString == nil {
-            // The /settings endpoint sends a partial "login"; ignore it entirely.
-            log.debug("Ignoring didSignIn with keyFetchToken or unwrapBKey missing.")
-            return
-        }
-
-        // TODO: Error handling.
-        let account = FirefoxAccount.fromConfigurationAndJSON(profile.accountConfiguration, data: data)!
-        profile.setAccount(account)
-        if let account = self.profile.getAccount() {
-            account.advance()
-        }
         self.dismissViewControllerAnimated(true, completion: nil)
     }
 

@@ -355,16 +355,6 @@ class AccountSetting: Setting, FxAContentViewControllerDelegate {
     override var accessoryType: UITableViewCellAccessoryType { return .None }
 
     func contentViewControllerDidSignIn(viewController: FxAContentViewController, data: JSON) -> Void {
-        if data["keyFetchToken"].asString == nil || data["unwrapBKey"].asString == nil {
-            // The /settings endpoint sends a partial "login"; ignore it entirely.
-            NSLog("Ignoring didSignIn with keyFetchToken or unwrapBKey missing.")
-            return
-        }
-
-        // TODO: Error handling.
-        let account = FirefoxAccount.fromConfigurationAndJSON(profile.accountConfiguration, data: data)!
-        profile.setAccount(account)
-
         // Reload the data to reflect the new Account immediately.
         settings.tableView.reloadData()
         // And start advancing the Account state in the background as well.
