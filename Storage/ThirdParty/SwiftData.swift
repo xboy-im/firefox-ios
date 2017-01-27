@@ -33,12 +33,17 @@
 // THE SOFTWARE.
 
 import Foundation
-import UIKit
 import Shared
 import XCGLogger
 
 private let DatabaseBusyTimeout: Int32 = 3 * 1000
 private let log = Logger.syncLogger
+
+public typealias Args = [ArgValue?]
+
+public protocol ArgValue {
+    func toObject() -> AnyObject
+}
 
 /**
  * Handle to a SQLite database.
