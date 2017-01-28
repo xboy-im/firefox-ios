@@ -11,7 +11,7 @@ open class ClientPayload: CleartextPayloadJSON {
             return false
         }
 
-        if self["deleted"].asBool ?? false {
+        if self["deleted"].bool ?? false {
             return true
         }
 
@@ -24,11 +24,11 @@ open class ClientPayload: CleartextPayloadJSON {
     }
 
     var name: String {
-        return self["name"].asString!
+        return self["name"].string!
     }
 
     var clientType: String {
-        return self["type"].asString!
+        return self["type"].string!
     }
     
     override open func equalPayloads(_ obj: CleartextPayloadJSON) -> Bool {

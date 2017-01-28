@@ -38,7 +38,7 @@ open class WipeCommand: Command {
 
     open static func commandFromSyncCommand(_ syncCommand: SyncCommand) -> Command? {
         let json = JSON.parse(syncCommand.value)
-        if let name = json["command"].asString,
+        if let name = json["command"].string,
             let args = json["args"].asArray {
                 return WipeCommand.fromName(name, args: args)
         }
@@ -51,8 +51,8 @@ open class DisplayURICommand: Command {
     let title: String
 
     public init?(command: String, args: [JSON]) {
-        if let uri = args[0].asString?.asURL,
-            let title = args[2].asString {
+        if let uri = args[0].string?.asURL,
+            let title = args[2].string {
                 self.uri = uri
                 self.title = title
         } else {
@@ -74,7 +74,7 @@ open class DisplayURICommand: Command {
 
     open static func commandFromSyncCommand(_ syncCommand: SyncCommand) -> Command? {
         let json = JSON.parse(syncCommand.value)
-        if let name = json["command"].asString,
+        if let name = json["command"].string,
             let args = json["args"].asArray {
                 return DisplayURICommand.fromName(name, args: args)
         }
@@ -182,7 +182,7 @@ open class ClientsSynchronizer: TimestampedSingleCollectionSynchronizer, Synchro
             let commands = record.payload.commands
             if !commands.isEmpty {
                 func parse(_ json: JSON) -> Command? {
-                    if let name = json["command"].asString,
+                    if let name = json["command"].string,
                         let args = json["args"].asArray,
                         let constructor = Commands[name] {
                             return constructor(name, args)

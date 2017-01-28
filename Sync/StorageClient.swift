@@ -252,19 +252,19 @@ public struct POSTResult {
             return nil
         }
 
-        let batchToken = json["batch"].asString
+        let batchToken = json["batch"].string
 
         if let s = json["success"].asArray,
            let f = json["failed"].asDictionary {
             var failed = false
-            let asStringOrFail: (JSON) -> String = { $0.asString ?? { failed = true; return "" }() }
+            let stringOrFail: (JSON) -> String = { $0.string ?? { failed = true; return "" }() }
 
             // That's the basic structure. Now let's transform the contents.
-            let successGUIDs = s.map(asStringOrFail)
+            let successGUIDs = s.map(stringOrFail)
             if failed {
                 return nil
             }
-            let failedGUIDs = mapValues(f, f: asStringOrFail)
+            let failedGUIDs = mapValues(f, f: stringOrFail)
             if failed {
                 return nil
             }

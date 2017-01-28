@@ -61,12 +61,12 @@ public enum BookmarkType: String {
     }
 
     public static func payloadFromJSON(_ json: JSON) -> BookmarkBasePayload? {
-        if json["deleted"].asBool ?? false {
+        if json["deleted"].bool ?? false {
             // Deleted records won't have a type.
             return BookmarkBasePayload(json)
         }
 
-        guard let typeString = json["type"].asString else {
+        guard let typeString = json["type"].string else {
             return nil
         }
 
@@ -101,11 +101,11 @@ public enum BookmarkType: String {
 
 open class LivemarkPayload: BookmarkBasePayload {
     open var feedURI: String? {
-        return self["feedUri"].asString
+        return self["feedUri"].string
     }
 
     open var siteURI: String? {
-        return self["siteUri"].asString
+        return self["siteUri"].string
     }
 
     override open func isValid() -> Bool {
@@ -149,10 +149,10 @@ open class LivemarkPayload: BookmarkBasePayload {
             modified: modified,
             hasDupe: self.hasDupe,
             // TODO: these might need to be weakened if real-world data is dirty.
-            parentID: self["parentid"].asString!,
-            parentName: self["parentName"].asString,
-            title: self["title"].asString,
-            description: self["description"].asString,
+            parentID: self["parentid"].string!,
+            parentName: self["parentName"].string,
+            title: self["title"].string,
+            description: self["description"].string,
             feedURI: self.feedURI!,
             siteURI: self.siteURI!
         )
@@ -184,7 +184,7 @@ open class SeparatorPayload: BookmarkBasePayload {
             return true
         }
 
-        if self["pos"].asInt != p["pos"].asInt {
+        if self["pos"].int != p["pos"].int {
             return false
         }
 
@@ -201,16 +201,16 @@ open class SeparatorPayload: BookmarkBasePayload {
             modified: modified,
             hasDupe: self.hasDupe,
             // TODO: these might need to be weakened if real-world data is dirty.
-            parentID: self["parentid"].asString!,
-            parentName: self["parentName"].asString,
-            pos: self["pos"].asInt!
+            parentID: self["parentid"].string!,
+            parentName: self["parentName"].string,
+            pos: self["pos"].int!
         )
     }
 }
 
 open class FolderPayload: BookmarkBasePayload {
     fileprivate var childrenAreValid: Bool {
-        return self.hasStringArrayField("children")
+        return self.hstringArrayField("children")
     }
 
     override open func isValid() -> Bool {
@@ -237,7 +237,7 @@ open class FolderPayload: BookmarkBasePayload {
     }
 
     open var children: [String] {
-        return self["children"].asArray!.map { $0.asString! }
+        return self["children"].asArray!.map { $0.string! }
     }
 
     override open func equalPayloads(_ obj: CleartextPayloadJSON) -> Bool {
@@ -253,11 +253,11 @@ open class FolderPayload: BookmarkBasePayload {
             return true
         }
 
-        if self["title"].asString != p["title"].asString {
+        if self["title"].string != p["title"].string {
             return false
         }
 
-        if self["description"].asString != p["description"].asString {
+        if self["description"].string != p["description"].string {
             return false
         }
 
@@ -278,10 +278,10 @@ open class FolderPayload: BookmarkBasePayload {
             modified: modified,
             hasDupe: self.hasDupe,
             // TODO: these might need to be weakened if real-world data is dirty.
-            parentID: self["parentid"].asString!,
-            parentName: self["parentName"].asString,
-            title: self["title"].asString!,
-            description: self["description"].asString,
+            parentID: self["parentid"].string!,
+            parentName: self["parentName"].string,
+            title: self["title"].string!,
+            description: self["description"].string,
             children: self.children
         )
     }
@@ -304,7 +304,7 @@ open class BookmarkPayload: BookmarkBasePayload {
             return false
         }
 
-        if !self.hasStringArrayField("tags") {
+        if !self.hstringArrayField("tags") {
             log.warning("Bookmark \(self.id) missing tags array. We'll replace with an empty array.")
             // Ignore.
         }
@@ -329,7 +329,7 @@ open class BookmarkPayload: BookmarkBasePayload {
             return true
         }
 
-        if !BookmarkPayload.requiredBookmarkStringFields.every({ p[$0].asString! == self[$0].asString! }) {
+        if !BookmarkPayload.requiredBookmarkStringFields.every({ p[$0].string! == self[$0].string! }) {
             return false
         }
 
@@ -339,7 +339,7 @@ open class BookmarkPayload: BookmarkBasePayload {
             return false
         }
 
-        if self["loadInSidebar"].asBool != p["loadInSidebar"].asBool {
+        if self["loadInSidebar"].bool != p["loadInSidebar"].bool {
             return false
         }
 
@@ -347,7 +347,7 @@ open class BookmarkPayload: BookmarkBasePayload {
     }
 
     lazy var tags: [String] = {
-        return self["tags"].asArray?.flatMap { $0.asString } ?? []
+        return self["tags"].asArray?.flatMap { $0.string } ?? []
     }()
 
     lazy var tagsString: String = {
@@ -367,13 +367,13 @@ open class BookmarkPayload: BookmarkBasePayload {
             modified: modified,
             hasDupe: self.hasDupe,
             // TODO: these might need to be weakened if real-world data is dirty.
-            parentID: self["parentid"].asString!,
-            parentName: self["parentName"].asString,
-            title: self["title"].asString ?? "",
-            description: self["description"].asString,
-            URI: self["bmkUri"].asString!,
+            parentID: self["parentid"].string!,
+            parentName: self["parentName"].string,
+            title: self["title"].string ?? "",
+            description: self["description"].string,
+            URI: self["bmkUri"].string!,
             tags: self.tagsString,           // Stringify it so we can put the array in the DB.
-            keyword: self["keyword"].asString
+            keyword: self["keyword"].string
         )
     }
 }
@@ -405,11 +405,11 @@ open class BookmarkQueryPayload: BookmarkPayload {
             return true
         }
 
-        if self["folderName"].asString != p["folderName"].asString {
+        if self["folderName"].string != p["folderName"].string {
             return false
         }
 
-        if self["queryId"].asString != p["queryId"].asString {
+        if self["queryId"].string != p["queryId"].string {
             return false
         }
 
@@ -425,15 +425,15 @@ open class BookmarkQueryPayload: BookmarkPayload {
             self.id,
             modified: modified,
             hasDupe: self.hasDupe,
-            parentID: self["parentid"].asString!,
-            parentName: self["parentName"].asString,
-            title: self["title"].asString ?? "",
-            description: self["description"].asString,
-            URI: self["bmkUri"].asString!,
+            parentID: self["parentid"].string!,
+            parentName: self["parentName"].string,
+            title: self["title"].string ?? "",
+            description: self["description"].string,
+            URI: self["bmkUri"].string!,
             tags: self.tagsString,           // Stringify it so we can put the array in the DB.
-            keyword: self["keyword"].asString,
-            folderName: self["folderName"].asString,
-            queryID: self["queryID"].asString
+            keyword: self["keyword"].string,
+            folderName: self["folderName"].string,
+            queryID: self["queryID"].string
         )
     }
 }
@@ -447,7 +447,7 @@ open class BookmarkBasePayload: CleartextPayloadJSON, MirrorItemable {
         return BookmarkBasePayload(JSON(["id": remappedGUID, "deleted": true]))
     }
 
-    func hasStringArrayField(_ name: String) -> Bool {
+    func hstringArrayField(_ name: String) -> Bool {
         guard let arr = self[name].asArray else {
             return false
         }
@@ -487,17 +487,17 @@ open class BookmarkBasePayload: CleartextPayloadJSON, MirrorItemable {
             return false
         }
 
-        if self["deleted"].asBool ?? false {
+        if self["deleted"].bool ?? false {
             return true
         }
 
         // If not deleted, we must be a specific, known, type!
-        if !BookmarkType.isValid(self["type"].asString) {
+        if !BookmarkType.isValid(self["type"].string) {
             return false
         }
 
         if !(self["parentName"].isString || self.id == "places") {
-            if (self["parentid"].asString! == "places") {
+            if (self["parentid"].string! == "places") {
                 log.debug("Accepting root with missing parent name.")
             } else {
                 // Bug 1318414.
@@ -514,7 +514,7 @@ open class BookmarkBasePayload: CleartextPayloadJSON, MirrorItemable {
     }
 
     open var hasDupe: Bool {
-        return self["hasDupe"].asBool ?? false
+        return self["hasDupe"].bool ?? false
     }
 
     /**
@@ -541,8 +541,8 @@ open class BookmarkBasePayload: CleartextPayloadJSON, MirrorItemable {
         // But we just checked, so we're good to roll on.
 
         let same: (String) -> Bool = { field in
-            let left = self[field].asString
-            let right = p[field].asString
+            let left = self[field].string
+            let right = p[field].string
             return left == right
         }
 
@@ -550,7 +550,7 @@ open class BookmarkBasePayload: CleartextPayloadJSON, MirrorItemable {
             return false
         }
 
-        if p["parentName"].asString != self["parentName"].asString {
+        if p["parentName"].string != self["parentName"].string {
             return false
         }
 

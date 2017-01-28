@@ -16,8 +16,8 @@ open class KeysPayload: CleartextPayloadJSON {
     
     fileprivate func keyBundleFromPair(_ input: JSON) -> KeyBundle? {
         if let pair: [JSON] = input.asArray {
-            if let encKey = pair[0].asString {
-                if let hmacKey = pair[1].asString {
+            if let encKey = pair[0].string {
+                if let hmacKey = pair[1].string {
                     return KeyBundle(encKeyB64: encKey, hmacKeyB64: hmacKey)
                 }
             }

@@ -40,7 +40,7 @@ open class EncryptedJSON: JSON {
 
     // For validating HMAC: the raw ciphertext as bytes without decoding.
     fileprivate var ciphertextB64: Data? {
-        if let ct = self["ciphertext"].asString {
+        if let ct = self["ciphertext"].string {
             return Bytes.dataFromBase64(ct)
         }
         return nil
@@ -50,7 +50,7 @@ open class EncryptedJSON: JSON {
      * You probably want to call validate() and then use .ciphertext.
      */
     fileprivate var ciphertextBytes: Data? {
-        return Bytes.decodeBase64(self["ciphertext"].asString!)
+        return Bytes.decodeBase64(self["ciphertext"].string!)
     }
 
     fileprivate func validate() -> Bool {
@@ -89,7 +89,7 @@ open class EncryptedJSON: JSON {
         // We can force-unwrap self["ciphertext"] because we already checked
         // it when verifying the HMAC above.
         guard let data = self.ciphertextBytes else {
-            log.error("Unable to decode ciphertext base64 in record \(self["id"].asString ?? "<unknown>")")
+            log.error("Unable to decode ciphertext base64 in record \(self["id"].string ?? "<unknown>")")
             valid = false
             return false
         }
@@ -120,7 +120,7 @@ open class EncryptedJSON: JSON {
             return _hmacBytes!
         }
 
-        _hmacBytes = Data(base16EncodedString: self["hmac"].asString!, options: NSDataBase16DecodingOptions.Default)
+        _hmacBytes = Data(base16EncodedString: self["hmac"].string!, options: NSDataBase16DecodingOptions.Default)
         return _hmacBytes!
     }
 
@@ -129,7 +129,7 @@ open class EncryptedJSON: JSON {
             return _ivBytes!
         }
 
-        _ivBytes = Bytes.decodeBase64(self["IV"].asString!)
+        _ivBytes = Bytes.decodeBase64(self["IV"].string!)
         return _ivBytes!
     }
 

@@ -61,27 +61,27 @@ public enum LocalCommand: CustomStringConvertible, Hashable {
         if json.isError {
             return nil
         }
-        guard let type = json["type"].asString else {
+        guard let type = json["type"].string else {
             return nil
         }
         switch type {
         case "ResetAllEngines":
             if let except = json["except"].asArray, except.every({$0.isString}) {
-                return .ResetAllEngines(except: Set(except.map({$0.asString!})))
+                return .ResetAllEngines(except: Set(except.map({$0.string!})))
             }
             return nil
         case "ResetEngine":
-            if let engine = json["engine"].asString {
+            if let engine = json["engine"].string {
                 return .ResetEngine(engine: engine)
             }
             return nil
         case "EnableEngine":
-            if let engine = json["engine"].asString {
+            if let engine = json["engine"].string {
                 return .EnableEngine(engine: engine)
             }
             return nil
         case "DisableEngine":
-            if let engine = json["engine"].asString {
+            if let engine = json["engine"].string {
                 return .DisableEngine(engine: engine)
             }
             return nil

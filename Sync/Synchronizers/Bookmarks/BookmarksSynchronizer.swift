@@ -41,7 +41,7 @@ class TrivialBookmarkStorer: BookmarkStorer {
 
             items.forEach { (guid, item) in
                 let payload = item.asPayloadWithChildren(itemsWithNewChildren[guid])
-                let mappedGUID = payload["id"].asString ?? guid
+                let mappedGUID = payload["id"].string ?? guid
                 let record = Record<BookmarkBasePayload>(id: mappedGUID, payload: payload)
                 records.append(record)
             }

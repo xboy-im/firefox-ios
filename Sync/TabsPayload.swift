@@ -6,6 +6,7 @@ import Foundation
 import Shared
 import Storage
 import XCGLogger
+import SwiftyJSON
 
 private let log = Logger.browserLogger
 
@@ -40,11 +41,11 @@ open class TabsPayload: CleartextPayloadJSON {
         class func fromJSON(_ json: JSON) -> Tab? {
             func getLastUsed(_ json: JSON) -> Timestamp? {
                 // This might be a string or a number.
-                if let num = json["lastUsed"].asNumber {
+                if let num = json["lastUsed"].number {
                     return Timestamp(num * 1000)
                 }
 
-                if let num = json["lastUsed"].asString {
+                if let num = json["lastUsed"].string {
                     // Try parsing.
                     return decimalSecondsStringToTimestamp(num)
                 }
@@ -52,10 +53,10 @@ open class TabsPayload: CleartextPayloadJSON {
                 return nil
             }
 
-            if let title = json["title"].asString,
+            if let title = json["title"].string,
                let urlHistory = jsonsToStrings(json["urlHistory"].asArray),
                let lastUsed = getLastUsed(json) {
-                return Tab(title: title, urlHistory: urlHistory, lastUsed: lastUsed, icon: json["icon"].asString)
+                return Tab(title: title, urlHistory: urlHistory, lastUsed: lastUsed, icon: json["icon"].string)
             }
 
             return nil
@@ -67,7 +68,7 @@ open class TabsPayload: CleartextPayloadJSON {
             return false
         }
 
-        if self["deleted"].asBool ?? false {
+        if self["deleted"].bool ?? false {
             return true
         }
 
@@ -80,7 +81,7 @@ open class TabsPayload: CleartextPayloadJSON {
     // lives in Storage, and Tab is more closely tied to TabsPayload.
 
     var remoteTabs: [RemoteTab] {
-        if let clientGUID = self["id"].asString {
+        if let clientGUID = self["id"].string {
             let payloadTabs = self["tabs"].asArray!
             let remoteTabs = optFilter(payloadTabs.map({ Tab.remoteTabFromJSON($0, clientGUID: clientGUID) }))
             if payloadTabs.count != remoteTabs.count {
@@ -97,7 +98,7 @@ open class TabsPayload: CleartextPayloadJSON {
     }
 
     var clientName: String {
-        return self["clientName"].asString!
+        return self["clientName"].string!
     }
 
     override open func equalPayloads(_ obj: CleartextPayloadJSON) -> Bool {

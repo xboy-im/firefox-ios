@@ -52,8 +52,8 @@ public struct EngineMeta: Equatable {
     let syncID: String
 
     public static func fromJSON(_ json: JSON) -> EngineMeta? {
-        if let syncID = json["syncID"].asString {
-            if let version = json["version"].asInt {
+        if let syncID = json["syncID"].string {
+            if let version = json["version"].int {
                 return EngineMeta(version: version, syncID: syncID)
             }
         }
@@ -89,8 +89,8 @@ public struct MetaGlobal: Equatable {
         if json.isError {
             return nil
         }
-        if let syncID = json["syncID"].asString {
-            if let storageVersion = json["storageVersion"].asInt {
+        if let syncID = json["syncID"].string {
+            if let storageVersion = json["storageVersion"].int {
                 let engines = EngineMeta.mapFromJSON(json["engines"].asDictionary) ?? [:]
                 let declined = json["declined"].asArray ?? []
                 return MetaGlobal(syncID: syncID,

@@ -24,25 +24,25 @@ open class EnvelopeJSON {
     }
 
     open var id: String {
-        return self.json["id"].asString!
+        return self.json["id"].string!
     }
 
     open var collection: String {
-        return self.json["collection"].asString ?? ""
+        return self.json["collection"].string ?? ""
     }
 
     open var payload: String {
-        return self.json["payload"].asString!
+        return self.json["payload"].string!
     }
 
     open var sortindex: Int {
         let s = self.json["sortindex"]
-        return s.asInt ?? 0
+        return s.int ?? 0
     }
 
     open var modified: Timestamp {
         if (self.json["modified"].isInt) {
-            return Timestamp(self.json["modified"].asInt!) * 1000
+            return Timestamp(self.json["modified"].int!) * 1000
         }
 
         if (self.json["modified"].isDouble) {
