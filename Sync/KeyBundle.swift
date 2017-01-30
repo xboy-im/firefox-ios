@@ -53,7 +53,7 @@ open class KeyBundle: Hashable {
         let hmacAlgorithm = CCHmacAlgorithm(kCCHmacAlgSHA256)
         let digestLen: Int = Int(CC_SHA256_DIGEST_LENGTH)
         let result = UnsafeMutablePointer<CUnsignedChar>.allocate(capacity: digestLen)
-        CCHmac(hmacAlgorithm, hmacKey.bytes, hmacKey.count, ciphertext.bytes, ciphertext.count, result)
+        CCHmac(hmacAlgorithm, hmacKey.getBytes(), hmacKey.count, ciphertext.getBytes(), ciphertext.count, result)
         return (result, digestLen)
     }
 
@@ -85,7 +85,7 @@ open class KeyBundle: Hashable {
         let (success, b, copied) = self.crypt(cleartext, iv: iv, op: CCOperation(kCCEncrypt))
         if success == CCCryptorStatus(kCCSuccess) {
             // Hooray!
-            let d = Data(bytes: b, length: Int(copied))
+            let d = Data(bytes: b, count: Int(copied))
             b.destroy()
             return (d, iv)
         }
