@@ -226,15 +226,15 @@ class MergedTreeNode {
     // merged tree. You need to use `mergedChildren` instead.
     fileprivate var decidedStructure: BookmarkTreeNode? {
         switch self.structureState {
-        case .Unknown:
+        case .unknown:
             return nil
-        case .Unchanged:
+        case .unchanged:
             return self.mirror
-        case .Remote:
+        case .remote:
             return self.remote
-        case .Local:
+        case .local:
             return self.local
-        case let .New(node):
+        case let .new(node):
             return node
         }
     }
@@ -250,7 +250,7 @@ class MergedTreeNode {
             return BookmarkTreeNode.Unknown(guid: self.guid)
         }
 
-        if case .Folder = decided {
+        if case .folder = decided {
             let children = merged.map { $0.asMergedTreeNode() }
             return BookmarkTreeNode.Folder(guid: self.guid, children: children)
         }

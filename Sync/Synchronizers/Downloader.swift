@@ -211,7 +211,7 @@ class BatchingDownloader<T: CleartextPayloadJSON> {
             // Store the incoming records for collection.
             self.store(response.value)
 
-            return deferMaybe(nextOffset == nil ? .Complete : .Incomplete)
+            return deferMaybe(nextOffset == nil ? .complete : .incomplete)
         }
 
         return fetch.bind { result in

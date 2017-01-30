@@ -124,22 +124,22 @@ public class BookmarksMirrorer {
                 return deferMaybe(result.failureValue!)
             }
             switch end {
-            case .Complete:
+            case .complete:
                 log.info("Done with batched mirroring.")
                 return self.applyRecordsFromBatcher()
                    >>> effect(self.downloader.advance)
                    >>> self.storage.doneApplyingRecordsAfterDownload
                    >>> always(SyncStatus.Completed)
-            case .Incomplete:
+            case .incomplete:
                 log.debug("Running another batch.")
                 // This recursion is fine because Deferred always pushes callbacks onto a queue.
                 return self.applyRecordsFromBatcher()
                    >>> effect(self.downloader.advance)
                    >>> { self.go(info, greenLight: greenLight) }
-            case .Interrupted:
+            case .interrupted:
                 log.info("Interrupted. Aborting batching this time.")
                 return deferMaybe(SyncStatus.Partial)
-            case .NoNewData:
+            case .noNewData:
                 log.info("No new data. No need to continue batching.")
                 self.downloader.advance()
                 return deferMaybe(SyncStatus.Completed)

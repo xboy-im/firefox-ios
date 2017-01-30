@@ -257,20 +257,20 @@ class ThreeWayTreeMerger {
     }
 
     fileprivate func oneWayMergeChildListsIntoMergedNode(_ result: MergedTreeNode, fromRemote remote: BookmarkTreeNode) throws {
-        guard case .Folder = remote else {
+        guard case .folder = remote else {
             preconditionFailure("Expected folder from which to merge children.")
         }
 
-        result.structureState = MergeState.Remote       // If the list changes, this will switch to .New.
+        result.structureState = MergeState.Remote       // If the list changes, this will switch to .new.
         try self.mergeChildListsIntoMergedNode(result, fromLocal: nil, remote: remote, mirror: self.mirror.find(remote.recordGUID))
     }
 
     fileprivate func oneWayMergeChildListsIntoMergedNode(_ result: MergedTreeNode, fromLocal local: BookmarkTreeNode) throws {
-        guard case .Folder = local else {
+        guard case .folder = local else {
             preconditionFailure("Expected folder from which to merge children.")
         }
 
-        result.structureState = MergeState.Local       // If the list changes, this will switch to .New.
+        result.structureState = MergeState.Local       // If the list changes, this will switch to .new.
         try self.mergeChildListsIntoMergedNode(result, fromLocal: local, remote: nil, mirror: self.mirror.find(local.recordGUID))
     }
 
@@ -329,7 +329,7 @@ class ThreeWayTreeMerger {
 
             let guid = node.recordGUID
 
-            if case .Folder = node {} else {
+            if case .folder = node {} else {
                 log.debug("\(guid) isn't a folder, so it won't have orphans.")
                 return nil
             }
@@ -567,7 +567,7 @@ class ThreeWayTreeMerger {
         log.debug("Setting \(result.guid)'s children to \(out.map { $0.guid }).")
         result.mergedChildren = out
 
-        // If the child list didn't change, then we don't need .New.
+        // If the child list didn't change, then we don't need .new.
         if changed {
             let newStructure = out.map { $0.asMergedTreeNode() }
             result.structureState = MergeState.New(value: BookmarkTreeNode.Folder(guid: result.guid, children: newStructure))
@@ -627,7 +627,7 @@ class ThreeWayTreeMerger {
         throw BookmarksMergeError()
     }
 
-    // This will never be called with two primary .Unknown values.
+    // This will never be called with two primary .unknown values.
     fileprivate func threeWayMerge(_ guid: GUID, localNode: BookmarkTreeNode, remoteNode: BookmarkTreeNode, mirrorNode: BookmarkTreeNode?) throws -> MergedTreeNode {
         if mirrorNode == nil {
             log.debug("Two-way merge for \(guid).")
@@ -669,8 +669,8 @@ class ThreeWayTreeMerger {
         }
 
         switch localNode {
-        case let .Folder(_, localChildren):
-            if case let .Folder(_, remoteChildren) = remoteNode {
+        case let .folder(_, localChildren):
+            if case let .folder(_, remoteChildren) = remoteNode {
                 // Structural merge.
                 if localChildren.sameElements(remoteChildren, f: { $0.recordGUID == $1.recordGUID }) {
                     // Great!
@@ -697,8 +697,8 @@ class ThreeWayTreeMerger {
                 return result
             }
 
-        case .NonFolder:
-            if case .NonFolder = remoteNode {
+        case .nonFolder:
+            if case .nonFolder = remoteNode {
                 log.debug("Two non-folders with GUID \(guid) collide. Taking remote.")
                 return result
             }
@@ -764,24 +764,24 @@ class ThreeWayTreeMerger {
 
     func fetchNameForFolder(_ folder: MergedTreeNode) throws -> String? {
         switch folder.valueState {
-        case let .New(v):
+        case let .new(v):
             return v.title
-        case .Unchanged:
+        case .unchanged:
             if let mirror = folder.mirror?.recordGUID,
                let title = self.itemSources.mirror.getMirrorItemWithGUID(mirror).value.successValue?.title {
                 return title
             }
-        case .Remote:
+        case .remote:
             if let remote = folder.remote?.recordGUID,
                let title = self.itemSources.buffer.getBufferItemWithGUID(remote).value.successValue?.title {
                 return title
             }
-        case .Local:
+        case .local:
             if let local = folder.local?.recordGUID,
                let title = self.itemSources.local.getLocalItemWithGUID(local).value.successValue?.title {
                 return title
             }
-        case .Unknown:
+        case .unknown:
             break
         }
 
@@ -816,21 +816,21 @@ class ThreeWayTreeMerger {
             n.remote = node.remote
             n.mergedChildren = node.mergedChildren
             n.structureState = node.structureState
-            n.valueState = .New(value: item.copyWithParentID(parentID, parentName: parentName))
+            n.valueState = .new(value: item.copyWithParentID(parentID, parentName: parentName))
 
             return n
         }
 
         switch node.valueState {
-        case .Unknown:
+        case .unknown:
             return node
-        case .Unchanged:
+        case .unchanged:
             return try copyWithMirrorItem(self.itemSources.mirror.getMirrorItemWithGUID(node.guid).value.successValue)
-        case .Local:
+        case .local:
             return try copyWithMirrorItem(self.itemSources.local.getLocalItemWithGUID(node.guid).value.successValue)
-        case .Remote:
+        case .remote:
             return try copyWithMirrorItem(self.itemSources.buffer.getBufferItemWithGUID(node.guid).value.successValue)
-        case let .New(value):
+        case let .new(value):
             return try copyWithMirrorItem(value)
         }
     }
@@ -848,7 +848,7 @@ class ThreeWayTreeMerger {
     // TODO: accumulate deletions into the three buckets as we go.
     //
     // TODO: if a local or remote node is kept but put in a different folder, we actually
-    // need to generate a .New node, so we can take the parentid and parentNode that we
+    // need to generate a .new node, so we can take the parentid and parentNode that we
     // must preserve.
     func mergeNode(_ guid: GUID, localNode: BookmarkTreeNode?, mirrorNode: BookmarkTreeNode?, remoteNode: BookmarkTreeNode?) throws -> MergedTreeNode {
         if let localGUID = localNode?.recordGUID {
@@ -885,7 +885,7 @@ class ThreeWayTreeMerger {
 
         func takeRemoteAndMergeChildren(_ remote: BookmarkTreeNode, mirror: BookmarkTreeNode?=nil) throws -> MergedTreeNode {
             let merged = self.takeRemoteIfChanged(remote, mirror: mirror)
-            if case .Folder = remote {
+            if case .folder = remote {
                 log.debug("… and it's a folder. Taking remote children.")
                 try self.oneWayMergeChildListsIntoMergedNode(merged, fromRemote: remote)
             }
@@ -894,7 +894,7 @@ class ThreeWayTreeMerger {
 
         func takeLocalAndMergeChildren(_ local: BookmarkTreeNode, mirror: BookmarkTreeNode?=nil) throws -> MergedTreeNode {
             let merged = self.takeLocalIfChanged(local, mirror: mirror)
-            if case .Folder = local {
+            if case .folder = local {
                 log.debug("… and it's a folder. Taking local children.")
                 try self.oneWayMergeChildListsIntoMergedNode(merged, fromLocal: local)
             }
@@ -903,7 +903,7 @@ class ThreeWayTreeMerger {
 
         func takeMirrorNode(_ mirror: BookmarkTreeNode) throws -> MergedTreeNode {
             let merged = MergedTreeNode.forUnchanged(mirror)
-            if case .Folder = mirror {
+            if case .folder = mirror {
                 try self.takeMirrorChildrenInMergedNode(merged)
             }
             return merged
@@ -1138,35 +1138,35 @@ class ThreeWayTreeMerger {
 
             // Verify that computed child lists match the right source node.
             switch node.structureState {
-            case .Remote:
+            case .remote:
                 assert(node.remote?.children?.map { $0.recordGUID } ?? [] == childGUIDs)
-            case .Local:
+            case .local:
                 assert(node.local?.children?.map { $0.recordGUID } ?? [] == childGUIDs)
-            case let .New(treeNode):
+            case let .new(treeNode):
                 assert(treeNode.children?.map { $0.recordGUID } ?? [] == childGUIDs)
             default:
                 break
             }
 
             switch node.valueState {
-            case .Unknown:
+            case .unknown:
                 return            // Never occurs: guarded by precondition.
-            case .Unchanged:
+            case .unchanged:
                 // We can't have Unchanged value without a mirror node…
                 assert(node.hasMirror)
 
                 switch node.structureState {
-                case .Unknown:
+                case .unknown:
                     return            // Never occurs: guarded by precondition.
-                case .Unchanged:
+                case .unchanged:
                     // Nothing changed!
                     return
-                case .Remote:
+                case .remote:
                     // Nothing special to do: no need to amend server.
                     break
-                case .Local:
+                case .local:
                     upstreamOp.amendChildrenFromMirror[node.guid] = childGUIDs
-                case .New:
+                case .new:
                     // No change in value, but a new structure.
                     // Construct a new upstream record from the old mirror value,
                     // and update the mirror structure.
@@ -1176,26 +1176,26 @@ class ThreeWayTreeMerger {
                 // We always need to do this for Remote, Local, New.
                 localOp.mirrorStructures[node.guid] = childGUIDs
 
-            case .Local:
+            case .local:
                 localOp.mirrorValuesToCopyFromLocal.insert(node.guid)
 
                 // Generate a new upstream record.
                 upstreamOp.amendChildrenFromLocal[node.guid] = childGUIDs
 
                 // Update the structure in the mirror if necessary.
-                if case .Unchanged = node.structureState {
+                if case .unchanged = node.structureState {
                     return
                 }
                 localOp.mirrorStructures[node.guid] = childGUIDs
 
-            case .Remote:
+            case .remote:
                 localOp.mirrorValuesToCopyFromBuffer.insert(node.guid)
 
                 // Update the structure in the mirror if necessary.
                 switch node.structureState {
-                case .Unchanged:
+                case .unchanged:
                     return
-                case .Remote:
+                case .remote:
                     localOp.mirrorStructures[node.guid] = childGUIDs
                 default:
                     // We need to upload a new record.
@@ -1203,7 +1203,7 @@ class ThreeWayTreeMerger {
                     localOp.mirrorStructures[node.guid] = childGUIDs
                 }
 
-            case let .New(value):
+            case let .new(value):
                 // We can only do this if we stuffed the BookmarkMirrorItem with the right children.
                 // Verify that with a precondition.
                 precondition(value.children ?? [] == childGUIDs)
@@ -1246,7 +1246,7 @@ class ThreeWayTreeMerger {
             }
 
             log.debug("Need to accumulate a root.")
-            if case .Unchanged = node.structureState {
+            if case .unchanged = node.structureState {
                 if !mirrorVersionIsVirtual {
                     log.debug("Root \(node.guid) is unchanged and already in the mirror.")
                     return
@@ -1257,13 +1257,13 @@ class ThreeWayTreeMerger {
             localOp.mirrorStructures[node.guid] = childGUIDs
 
             switch node.structureState {
-            case .Remote:
+            case .remote:
                 log.debug("Root \(node.guid) taking remote structure.")
                 return
-            case .Local:
+            case .local:
                 log.debug("Root \(node.guid) taking local structure.")
                 upstreamOp.amendChildrenFromLocal[node.guid] = childGUIDs
-            case .New:
+            case .new:
                 log.debug("Root \(node.guid) taking new structure.")
                 if node.hasMirror && !mirrorVersionIsVirtual {
                     log.debug("… uploading with mirror value.")
@@ -1320,10 +1320,10 @@ class ThreeWayTreeMerger {
             // Not new. Emit copy directives.
 
             switch node.valueState {
-            case .Remote:
+            case .remote:
                 localOp.mirrorValuesToCopyFromBuffer.insert(node.guid)
 
-            case .Local:
+            case .local:
                 let localGUID = node.local!.recordGUID
 
                 // If we're taking the local value, we expect to keep the local GUID.
@@ -1344,7 +1344,7 @@ class ThreeWayTreeMerger {
             // New. Emit explicit insertions into all three places,
             // and eliminate any existing records for this GUID.
             // Note that we don't check structure: this isn't a folder.
-            case let .New(value):
+            case let .new(value):
                 //
                 // TODO: ensure that `value` has the right parent GUID!!!
                 // Reparenting means that the moved node has _new_ values
