@@ -560,7 +560,8 @@ struct ActivityStreamTracker {
             "action_position": position,
             "app_version": AppInfo.appVersion,
             "build": AppInfo.buildNumber,
-            "locale": NSLocale.currentLocale().localeIdentifier
+            "locale": NSLocale.currentLocale().localeIdentifier,
+            "release_channel": AppConstants.BuildChannel.rawValue
         ]
 
         if let provider = shareProvider {
@@ -575,7 +576,8 @@ struct ActivityStreamTracker {
             "session_duration": NSNumber(unsignedLongLong: duration),
             "app_version": AppInfo.appVersion,
             "build": AppInfo.buildNumber,
-            "locale": NSLocale.currentLocale().localeIdentifier
+            "locale": NSLocale.currentLocale().localeIdentifier,
+            "release_channel": AppConstants.BuildChannel.rawValue
         ])
     }
 }
