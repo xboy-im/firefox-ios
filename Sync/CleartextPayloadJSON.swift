@@ -20,6 +20,16 @@ open class BasePayloadJSON {
     fileprivate func isValid() -> Bool {
         return self._json.error == nil
     }
+
+    subscript(key: String) -> JSON {
+        get {
+            return _json[key]
+        }
+
+        set {
+            _json[key] = newValue
+        }
+    }
 }
 
 /**
@@ -30,7 +40,7 @@ open class BasePayloadJSON {
 open class CleartextPayloadJSON: BasePayloadJSON {
     // Override me.
     override open func isValid() -> Bool {
-        return super.isValid() && _json["id"].isStringOrNull
+        return super.isValid() && _json["id"].isStringOrNull()
     }
 
     open var id: String {
@@ -53,8 +63,40 @@ open class CleartextPayloadJSON: BasePayloadJSON {
     }
 }
 
-//extension JSON {
-//    public var isStringOrNull: Bool {
-//        return self.isStringOrNull || self.isNull
-//    }
-//}
+public extension JSON {
+    func isStringOrNull() -> Bool {
+        return isNull() || isString()
+    }
+
+    func isError() -> Bool {
+        return self.error != nil
+    }
+
+    func isString() -> Bool {
+        return self.type == .string
+    }
+
+    func isBool() -> Bool {
+        return self.type == .bool
+    }
+
+    func isArray() -> Bool {
+        return self.type == .array
+    }
+
+    func isDictionary() -> Bool {
+        return self.type == .dictionary
+    }
+
+    func isNull() -> Bool {
+        return self.type == .null
+    }
+
+    func isInt() -> Bool {
+        return self.type == .number && self.int != nil
+    }
+
+    func isDouble() -> Bool {
+        return self.type == .number && self.double != nil
+    }
+}

@@ -4,12 +4,13 @@
 
 import Foundation
 import Shared
+import SwiftyJSON
 
 open class EnvelopeJSON {
     fileprivate let json: JSON
 
     public init(_ jsonString: String) {
-        self.json = JSON.parse(jsonString)
+        self.json = JSON(parseJSON: jsonString)
     }
 
     public init(_ json: JSON) {
@@ -17,10 +18,10 @@ open class EnvelopeJSON {
     }
 
     open func isValid() -> Bool {
-        return !self.json.isError &&
-            self.json["id"].isString &&
+        return !self.json.isError() &&
+            self.json["id"].isString() &&
             //self["collection"].isString &&
-            self.json["payload"].isString
+            self.json["payload"].isString()
     }
 
     open var id: String {
@@ -41,27 +42,27 @@ open class EnvelopeJSON {
     }
 
     open var modified: Timestamp {
-        if (self.json["modified"].isInt) {
-            return Timestamp(self.json["modified"].int!) * 1000
+        if let intValue = self.json["modified"].int {
+            return Timestamp(intValue) * 1000
         }
 
-        if (self.json["modified"].isDouble) {
-            return Timestamp(1000 * (self.json["modified"].asDouble ?? 0.0))
+        if let doubleValue = self.json["modified"].double {
+            return Timestamp(1000 * (doubleValue))
         }
 
         return 0
     }
 
     open func toString() -> String {
-        return self.json.toString()
+        return self.json.rawString()!
     }
 
     open func withModified(_ now: Timestamp) -> EnvelopeJSON {
-        if var d = self.json.asDictionary {
+        if var d = self.json.dictionary {
             d["modified"] = JSON(Double(now) / 1000)
             return EnvelopeJSON(JSON(d))
         }
-        return EnvelopeJSON(JSON.parse("!")) // Intentionally bad JSON.
+        return EnvelopeJSON(JSON(parseJSON: "!")) // Intentionally bad JSON.
     }
 }
 

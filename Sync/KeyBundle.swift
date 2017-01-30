@@ -6,6 +6,7 @@ import Foundation
 import Shared
 import FxA
 import Account
+import SwiftyJSON
 
 private let KeyLength = 32
 
@@ -17,9 +18,9 @@ open class KeyBundle: Hashable {
         let salt = Data()
         let contextInfo = FxAClient10.KW("oldsync")
         let len: UInt = 64               // KeyLength + KeyLength, without type nonsense.
-        let derived = kB.deriveHKDFSHA256KeyWithSalt(salt, contextInfo: contextInfo, length: len)
-        return KeyBundle(encKey: derived.subdataWithRange(NSRange(location: 0, length: KeyLength)),
-                         hmacKey: derived.subdataWithRange(NSRange(location: KeyLength, length: KeyLength)))
+        let derived = (kB as NSData).deriveHKDFSHA256Key(withSalt: salt, contextInfo: contextInfo, length: len)!
+        return KeyBundle(encKey: derived.subdata(in: Range(uncheckedBounds: (lower: 0, upper: KeyLength))),
+                         hmacKey: derived.subdata(in: Range(uncheckedBounds: (lower: KeyLength, upper: KeyLength))))
     }
 
     open class func random() -> KeyBundle {
@@ -109,8 +110,8 @@ open class KeyBundle: Hashable {
     }
 
 
-    fileprivate func crypt(_ input: NSData, iv: NSData, op: CCOperation) -> (status: CCCryptorStatus, buffer: UnsafeMutablePointer<Void>, count: Int) {
-        let resultSize = input.length + kCCBlockSizeAES128
+    fileprivate func crypt(_ input: Data, iv: Data, op: CCOperation) -> (status: CCCryptorStatus, buffer: UnsafeMutableRawPointer, count: Int) {
+        let resultSize = input.count + kCCBlockSizeAES128
         let result = UnsafeMutableRawPointer.alloc(resultSize)
         var copied: Int = 0
 
@@ -151,7 +152,7 @@ open class KeyBundle: Hashable {
      *
      * For this reason, be careful trying to simplify or improve this code.
      */
-    open func factory<T: CleartextPayloadJSON>(_ f: (JSON) -> T) -> (String) -> T? {
+    open func factory<T: CleartextPayloadJSON>(_ f: @escaping (JSON) -> T) -> (String) -> T? {
         return { (payload: String) -> T? in
             let potential = EncryptedJSON(json: payload, keyBundle: self)
             if !(potential.isValid()) {
@@ -167,10 +168,10 @@ open class KeyBundle: Hashable {
     }
 
     // TODO: how much do we want to move this into EncryptedJSON?
-    open func serializer<T: CleartextPayloadJSON>(_ f: (T) -> JSON) -> (Record<T>) -> JSON? {
+    open func serializer<T: CleartextPayloadJSON>(_ f: @escaping (T) -> JSON) -> (Record<T>) -> JSON? {
         return { (record: Record<T>) -> JSON? in
             let json = f(record.payload)
-            let data = json.toString(false).utf8EncodedData
+            let data = (json.rawString() ?? "").utf8EncodedData
 
             // We pass a null IV, which means "generate me a new one".
             // We then include the generated IV in the resulting record.
@@ -179,21 +180,21 @@ open class KeyBundle: Hashable {
                 let ciphertext = ciphertext.base64EncodedString
 
                 // The HMAC is computed over the base64 string. As bytes. Yes, I know.
-                if let encodedCiphertextBytes = ciphertext.dataUsingEncoding(NSASCIIStringEncoding, allowLossyConversion: false) {
+                if let encodedCiphertextBytes = ciphertext.data(using: String.Encoding.ascii, allowLossyConversion: false) {
                     let hmac = self.hmacString(encodedCiphertextBytes)
                     let iv = iv.base64EncodedString
 
                     // The payload is stringified JSON. Yes, I know.
-                    let payload = JSON([
+                    let payload: Any = JSON(object: [
                         "ciphertext": ciphertext,
                         "IV": iv,
                         "hmac": hmac,
-                    ]).toString(false)
+                    ]).rawString() ?? JSON.null
 
-                    return JSON([
+                    return JSON(object: [
                         "id": record.id,
                         "sortindex": record.sortindex,
-                        "ttl": record.ttl ?? JSON.null,
+                        "ttl": record.ttl ?? JSON.null as Any,
                         "payload": payload,
                     ])
                 }
@@ -288,7 +289,7 @@ public struct RecordEncrypter<T: CleartextPayloadJSON> {
         self.factory = bundle.factory(encoder.decode)
     }
 
-    init(serializer: (Record<T>) -> JSON?, factory: (String) -> T?) {
+    init(serializer: @escaping (Record<T>) -> JSON?, factory: @escaping (String) -> T?) {
         self.serializer = serializer
         self.factory = factory
     }

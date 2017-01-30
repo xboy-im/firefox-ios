@@ -7,6 +7,7 @@ import Shared
 import FxA
 import Account
 import XCGLogger
+import SwiftyJSON
 
 private let log = Logger.syncLogger
 
@@ -17,7 +18,8 @@ private let log = Logger.syncLogger
  *
  * into a new JSON object resulting from decrypting and parsing the ciphertext.
  */
-open class EncryptedJSON: JSON {
+open class EncryptedJSON {
+    var _json: JSON
     var _cleartext: JSON?               // Cache decrypted cleartext.
     var _ciphertextBytes: Data?       // Cache decoded ciphertext.
     var _hmacBytes: Data?             // Cache decoded HMAC.
@@ -30,12 +32,12 @@ open class EncryptedJSON: JSON {
 
     public init(json: String, keyBundle: KeyBundle) {
         self.keyBundle = keyBundle
-        super.init(JSON.parse(json))
+        self._json = JSON.init(parseJSON: json)
     }
 
     public init(json: JSON, keyBundle: KeyBundle) {
         self.keyBundle = keyBundle
-        super.init(json)
+        self._json = json
     }
 
     // For validating HMAC: the raw ciphertext as bytes without decoding.
@@ -60,9 +62,9 @@ open class EncryptedJSON: JSON {
 
         defer { validated = true }
 
-        guard self["ciphertext"].isString &&
-              self["hmac"].isString &&
-              self["IV"].isString else {
+        guard self["ciphertext"].type == .string &&
+              self["hmac"].type == .string &&
+              self["IV"].type == .string else {
             valid = false
             return false
         }
@@ -100,7 +102,7 @@ open class EncryptedJSON: JSON {
     }
 
     open func isValid() -> Bool {
-        return !isError && self.validate()
+        return !_json.isError() && self.validate()
     }
 
     /**
@@ -119,8 +121,7 @@ open class EncryptedJSON: JSON {
         if (_hmacBytes != nil) {
             return _hmacBytes!
         }
-
-        _hmacBytes = Data(base16EncodedString: self["hmac"].string!, options: NSDataBase16DecodingOptions.Default)
+        _hmacBytes = Data(base16EncodedString: self["hmac"].stringValue, options: NSDataBase16DecodingOptions.Default)
         return _hmacBytes!
     }
 
@@ -151,7 +152,18 @@ open class EncryptedJSON: JSON {
             return nil
         }
 
-        _cleartext = JSON.parse(decrypted!)
+        _cleartext = JSON(parseJSON: decrypted!)
         return _cleartext!
+    }
+
+
+    subscript(key: String) -> JSON {
+        get {
+            return _json[key]
+        }
+
+        set {
+            _json[key] = newValue
+        }
     }
 }

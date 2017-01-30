@@ -4,6 +4,7 @@
 
 import Foundation
 import Shared
+import SwiftyJSON
 
 open class ClientPayload: CleartextPayloadJSON {
     override open func isValid() -> Bool {
@@ -15,20 +16,20 @@ open class ClientPayload: CleartextPayloadJSON {
             return true
         }
 
-        return self["name"].isString &&
-               self["type"].isString
+        return self["name"].type == Type.string &&
+               self["type"].type == Type.string
     }
 
     var commands: [JSON] {
-        return self["commands"].asArray ?? []   // It might not be present at all.
+        return self["commands"].array ?? []   // It might not be present at all.
     }
 
     var name: String {
-        return self["name"].string!
+        return self["name"].stringValue
     }
 
     var clientType: String {
-        return self["type"].string!
+        return self["type"].stringValue
     }
     
     override open func equalPayloads(_ obj: CleartextPayloadJSON) -> Bool {

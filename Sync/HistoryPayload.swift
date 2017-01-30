@@ -5,6 +5,7 @@
 import Foundation
 import Shared
 import Storage
+import SwiftyJSON
 
 open class HistoryPayload: CleartextPayloadJSON {
     open class func fromJSON(_ json: JSON) -> HistoryPayload? {
