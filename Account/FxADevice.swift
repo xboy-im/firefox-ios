@@ -5,25 +5,33 @@
 import Foundation
 import Shared
 
+typealias PushParams = (callback: String, publicKey: String?, authKey: String?)
+
 public struct FxADevice {
     let name: String
     let id: String?
     let type: String?
+    let pushAuthKey: String?
+    let pushPublicKey: String?
+    let pushCallback: String?
     let isCurrentDevice: Bool
 
-    private init(name: String, id: String?, type: String?, isCurrentDevice: Bool = false) {
+    private init(name: String, id: String?, type: String?, isCurrentDevice: Bool = false, push: PushParams?) {
         self.name = name
         self.id = id
         self.type = type
         self.isCurrentDevice = isCurrentDevice
+        self.pushAuthKey = push?.callback
+        self.pushPublicKey = push?.publicKey
+        self.pushCallback = push?.callback
     }
 
-    static func forRegister(name: String, type: String) -> FxADevice {
-        return FxADevice(name: name, id: nil, type: type)
+    static func forRegister(name: String, type: String, push: PushParams?) -> FxADevice {
+        return FxADevice(name: name, id: nil, type: type, push: push)
     }
 
-    static func forUpdate(name: String, id: String) -> FxADevice {
-        return FxADevice(name: name, id: id, type: nil)
+    static func forUpdate(name: String, id: String, push: PushParams?) -> FxADevice {
+        return FxADevice(name: name, id: id, type: nil, push: push)
     }
 
     func toJSON() -> JSON {
@@ -31,6 +39,9 @@ public struct FxADevice {
         parameters["name"] = name
         parameters["id"] = id
         parameters["type"] = type
+        parameters["pushCallback"] = pushCallback
+        parameters["pushPublicKey"] = pushPublicKey
+        parameters["pushAuthKey"] = pushAuthKey
 
         return JSON(parameters)
     }
@@ -44,6 +55,14 @@ public struct FxADevice {
         }
 
         let isCurrentDevice = json["isCurrentDevice"].asBool ?? false
-        return FxADevice(name: name, id: id, type: type, isCurrentDevice: isCurrentDevice)
+
+        let push: PushParams?
+        if let pushCallback = json["pushCallback"].asString {
+            push = (callback: pushCallback, publicKey: json["pushPublicKey"].asString, authKey: json["pushAuthKey"].asString)
+        } else {
+            push = nil
+        }
+
+        return FxADevice(name: name, id: id, type: type, isCurrentDevice: isCurrentDevice, push: push)
     }
 }

@@ -76,15 +76,22 @@ public class FxADeviceRegistrator {
                 return deferMaybe(FxADeviceRegistrationResult.AlreadyRegistered)
         }
 
+        let pushParams: PushParams?
+        if let pushRegistration = account.pushRegistration {
+            pushParams = (callback: pushRegistration.channelID, publicKey: nil, authKey: nil)
+        } else {
+            pushParams = nil
+        }
+
         let client = client ?? FxAClient10(endpoint: account.configuration.authEndpointURL)
         let name = DeviceInfo.defaultClientName()
         let device: FxADevice
         let registrationResult: FxADeviceRegistrationResult
         if let registration = account.deviceRegistration {
-            device = FxADevice.forUpdate(name, id: registration.id)
+            device = FxADevice.forUpdate(name, id: registration.id, push: pushParams)
             registrationResult = FxADeviceRegistrationResult.Updated
         } else {
-            device = FxADevice.forRegister(name, type: "mobile")
+            device = FxADevice.forRegister(name, type: "mobile", push: pushParams)
             registrationResult = FxADeviceRegistrationResult.Registered
         }
 
