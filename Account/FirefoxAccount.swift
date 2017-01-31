@@ -31,6 +31,8 @@ public class FirefoxAccount {
 
     public var deviceRegistration: FxADeviceRegistration?
 
+    public var pushRegistration: PushRegistration?
+
     public let configuration: FirefoxAccountConfiguration
 
     private let stateCache: KeychainCache<FxAState>
@@ -122,8 +124,10 @@ public class FirefoxAccount {
         dict["email"] = email
         dict["uid"] = uid
         dict["deviceRegistration"] = deviceRegistration
+        dict["pushRegistration"] = pushRegistration
         dict["configurationLabel"] = configuration.label.rawValue
         dict["stateKeyLabel"] = stateCache.label
+        dict["pushRegistration"] = pushRegistration
         return dict
     }
 
@@ -147,11 +151,13 @@ public class FirefoxAccount {
             uid = dictionary["uid"] as? String {
                 let deviceRegistration = dictionary["deviceRegistration"] as? FxADeviceRegistration
                 let stateCache = KeychainCache.fromBranch("account.state", withLabel: dictionary["stateKeyLabel"] as? String, withDefault: SeparatedState(), factory: stateFromJSON)
-                return FirefoxAccount(
+                let account = FirefoxAccount(
                     configuration: configurationLabel.toConfiguration(),
                     email: email, uid: uid,
                     deviceRegistration: deviceRegistration,
                     stateCache: stateCache)
+                account.pushRegistration = dictionary["pushRegistration"] as? PushRegistration
+                return account
         }
         return nil
     }
