@@ -56,9 +56,18 @@ public struct FxADevice {
 
         let isCurrentDevice = json["isCurrentDevice"].asBool ?? false
 
+        func emptyIsNil(s: String?) -> String? {
+            if let s = s where s != "" {
+                return s
+            }
+            return nil
+        }
+
         let push: PushParams?
         if let pushCallback = json["pushCallback"].asString {
-            push = (callback: pushCallback, publicKey: json["pushPublicKey"].asString, authKey: json["pushAuthKey"].asString)
+            let publicKey = emptyIsNil(json["pushPublicKey"].asString)
+            let authKey   = emptyIsNil(json["pushAuthKey"].asString)
+            push = (callback: pushCallback, publicKey: publicKey, authKey: authKey)
         } else {
             push = nil
         }
