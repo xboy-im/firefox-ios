@@ -78,7 +78,7 @@ public class FxADeviceRegistrator {
 
         let pushParams: PushParams?
         if let pushRegistration = account.pushRegistration {
-            pushParams = (callback: pushRegistration.channelID, publicKey: nil, authKey: nil)
+            pushParams = (callback: pushRegistration.endpoint.absoluteString!, publicKey: nil, authKey: nil)
         } else {
             pushParams = nil
         }

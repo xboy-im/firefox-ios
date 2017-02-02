@@ -21,7 +21,7 @@ public struct FxADevice {
         self.id = id
         self.type = type
         self.isCurrentDevice = isCurrentDevice
-        self.pushAuthKey = push?.callback
+        self.pushAuthKey = push?.authKey
         self.pushPublicKey = push?.publicKey
         self.pushCallback = push?.callback
     }
